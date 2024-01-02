@@ -1,0 +1,55 @@
+# Distribution / packaging
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+node_modules/
+.idea/
+venv/
+.env
+.env-prod
+
+# cache folder
+cache/*
+!cache/.gitkeep
+__pycache__/
+*.pyc
+
+# crts folder
+certs/*
+!certs/.gitkeep
+
+# logs folder
+logs/*
+!logs/.gitkeep
+
+# local folder
+local/*
+!local/.gitkeep
+
+
+# package directories
+node_modules
+jspm_packages
+
+# Serverless directories
+.serverless
+
+package-lock.json
+
+twistd.pid
+
+# vscode files
+.vscode/*
