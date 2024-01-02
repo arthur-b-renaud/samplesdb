@@ -100,7 +100,7 @@ class ArtistSample(IdBaseMixin, TimestampBaseMixin):
             "sa": Column(ForeignKey("sample.id", ondelete="SET NULL"), index=True)
         },
     )
-    sample: Artist = field(
+    sample: Sample = field(
         default=None,
         metadata={"sa": relationship("Sample", back_populates="artists_samples")},
     )
@@ -119,7 +119,7 @@ class Sample(IdBaseMixin, TimestampBaseMixin):
         metadata={"sa": relationship("ArtistSample", lazy="noload", cascade="merge")},
     )
 
-    title: str = field(default=None, metadata={"sa": Column(String)})
+    title: str = field(default=None, metadata={"sa": Column(String, nullable=False)})
     album_title: str = field(default=None, metadata={"sa": Column(String)})
 
     # Music metadata
