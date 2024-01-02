@@ -69,7 +69,7 @@ class Artist(IdBaseMixin, TimestampBaseMixin):
     # Relation with ArtistSample
     artists_samples: List[ArtistSample] = field(
         default_factory=list,
-        metadata={"sa": relationship("ArtistSample", lazy="noload", cascade="merge")},
+        metadata={"sa": relationship("ArtistSample", lazy="noload")},
     )
 
 
@@ -116,7 +116,7 @@ class Sample(IdBaseMixin, TimestampBaseMixin):
     # Relation with ArtistSample
     artists_samples: List[ArtistSample] = field(
         default_factory=list,
-        metadata={"sa": relationship("ArtistSample", lazy="noload", cascade="merge")},
+        metadata={"sa": relationship("ArtistSample", lazy="noload")},
     )
 
     title: str = field(default=None, metadata={"sa": Column(String, nullable=False)})
