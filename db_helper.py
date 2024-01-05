@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import  List, Tuple
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker, joinedload

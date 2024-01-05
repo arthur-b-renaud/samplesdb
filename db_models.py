@@ -69,19 +69,19 @@ class ArtistModel(IdBaseMixin, TimestampBaseMixin):
     # Relation with ArtistTrack
     artists_tracks: List[ArtistTrackModel] = field(
         default_factory=list,
-        metadata={"sa": relationship("ArtistTrack", lazy="noload")},
+        metadata={"sa": relationship("ArtistTrackModel", lazy="noload")},
     )
 
 
 @mapper_registry.mapped
 @dataclass
 class ArtistTrackModel(IdBaseMixin, TimestampBaseMixin):
-    """Many-to-many relation between Artist and Track"""
+    """Many-to-many relation between ArtistModel and TrackModel"""
 
     __tablename__ = "artist_track"
     __sa_dataclass_metadata_key__ = "sa"
 
-    # Relation with Artist
+    # Relation with ArtistModel
     artist_ref: int = field(
         default=None,
         metadata={
@@ -90,7 +90,7 @@ class ArtistTrackModel(IdBaseMixin, TimestampBaseMixin):
     )
     artist: ArtistModel = field(
         default=None,
-        metadata={"sa": relationship("Artist", back_populates="artists_tracks")},
+        metadata={"sa": relationship("ArtistModel", back_populates="artists_tracks")},
     )
 
     # Relation with Track
@@ -98,9 +98,9 @@ class ArtistTrackModel(IdBaseMixin, TimestampBaseMixin):
         default=None,
         metadata={"sa": Column(ForeignKey("track.id", ondelete="CASCADE"), index=True)},
     )
-    track: Track = field(
+    track: TrackModel = field(
         default=None,
-        metadata={"sa": relationship("Track", back_populates="artists_tracks")},
+        metadata={"sa": relationship("TrackModel", back_populates="artists_tracks")},
     )
 
 
@@ -114,9 +114,9 @@ class AlbumModel(IdBaseMixin, TimestampBaseMixin):
     title: str = field(default=None, metadata={"sa": Column(String, nullable=False)})
 
     # Relation with Track
-    tracks: List[Track] = field(
+    tracks: List[TrackModel] = field(
         default_factory=list,
-        metadata={"sa": relationship("Track", lazy="noload")},
+        metadata={"sa": relationship("TrackModel", lazy="noload")},
     )
 
 
@@ -130,7 +130,7 @@ class TrackModel(IdBaseMixin, TimestampBaseMixin):
     # Relation with ArtistTrack
     artists_tracks: List[ArtistTrackModel] = field(
         default_factory=list,
-        metadata={"sa": relationship("ArtistTrack", lazy="noload")},
+        metadata={"sa": relationship("ArtistTrackModel", lazy="noload")},
     )
 
     # Relation with Album
@@ -140,7 +140,7 @@ class TrackModel(IdBaseMixin, TimestampBaseMixin):
     )
     album: AlbumModel = field(
         default=None,
-        metadata={"sa": relationship("Album", back_populates="tracks")},
+        metadata={"sa": relationship("AlbumModel", back_populates="tracks")},
     )
 
     title: str = field(default=None, metadata={"sa": Column(String, nullable=False)})
