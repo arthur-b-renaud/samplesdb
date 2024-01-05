@@ -66,12 +66,12 @@ def get_album(
     return albums[0]
 
 
-def create_samples(
+def create_tracks(
     session: Session,
     tracks_and_artists: List[Tuple[TrackModel, List[ArtistModel]]],
 ) -> List[TrackModel]:
     """
-    Create multiple Samples
+    Create multiple Tracks
     :param session: the connexion to the database
     :param tracks_and_artists: List of tuples with TrackModels and ArtistModels of each track. Example:
     >>> tracks_and_artists = [
@@ -166,7 +166,7 @@ if __name__ == "__main__":
     #         ),
     #     ]
     #
-    #     created_samples = create_samples(
+    #     created_samples = create_tracks(
     #         session=conn,
     #         tracks_and_artists=my_samples,
     #     )
