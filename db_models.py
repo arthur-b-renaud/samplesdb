@@ -59,7 +59,7 @@ class TimestampBaseMixin:
 
 @mapper_registry.mapped
 @dataclass
-class Artist(IdBaseMixin, TimestampBaseMixin):
+class ArtistModel(IdBaseMixin, TimestampBaseMixin):
 
     __tablename__ = "artist"
     __sa_dataclass_metadata_key__ = "sa"
@@ -67,7 +67,7 @@ class Artist(IdBaseMixin, TimestampBaseMixin):
     full_name: str = field(default=None, metadata={"sa": Column(String)})
 
     # Relation with ArtistTrack
-    artists_tracks: List[ArtistTrack] = field(
+    artists_tracks: List[ArtistTrackModel] = field(
         default_factory=list,
         metadata={"sa": relationship("ArtistTrack", lazy="noload")},
     )
@@ -75,7 +75,7 @@ class Artist(IdBaseMixin, TimestampBaseMixin):
 
 @mapper_registry.mapped
 @dataclass
-class ArtistTrack(IdBaseMixin, TimestampBaseMixin):
+class ArtistTrackModel(IdBaseMixin, TimestampBaseMixin):
     """Many-to-many relation between Artist and Track"""
 
     __tablename__ = "artist_track"
@@ -88,7 +88,7 @@ class ArtistTrack(IdBaseMixin, TimestampBaseMixin):
             "sa": Column(ForeignKey("artist.id", ondelete="CASCADE"), index=True)
         },
     )
-    artist: Artist = field(
+    artist: ArtistModel = field(
         default=None,
         metadata={"sa": relationship("Artist", back_populates="artists_tracks")},
     )
@@ -106,7 +106,7 @@ class ArtistTrack(IdBaseMixin, TimestampBaseMixin):
 
 @mapper_registry.mapped
 @dataclass
-class Album(IdBaseMixin, TimestampBaseMixin):
+class AlbumModel(IdBaseMixin, TimestampBaseMixin):
 
     __tablename__ = "album"
     __sa_dataclass_metadata_key__ = "sa"
@@ -122,13 +122,13 @@ class Album(IdBaseMixin, TimestampBaseMixin):
 
 @mapper_registry.mapped
 @dataclass
-class Track(IdBaseMixin, TimestampBaseMixin):
+class TrackModel(IdBaseMixin, TimestampBaseMixin):
 
     __tablename__ = "track"
     __sa_dataclass_metadata_key__ = "sa"
 
     # Relation with ArtistTrack
-    artists_tracks: List[ArtistTrack] = field(
+    artists_tracks: List[ArtistTrackModel] = field(
         default_factory=list,
         metadata={"sa": relationship("ArtistTrack", lazy="noload")},
     )
@@ -138,7 +138,7 @@ class Track(IdBaseMixin, TimestampBaseMixin):
         default=None,
         metadata={"sa": Column(ForeignKey("album.id", ondelete="CASCADE"), index=True)},
     )
-    album: Album = field(
+    album: AlbumModel = field(
         default=None,
         metadata={"sa": relationship("Album", back_populates="tracks")},
     )
@@ -164,7 +164,9 @@ class Track(IdBaseMixin, TimestampBaseMixin):
     )
 
     # File storage
+    wav_etag_hash: str = field(default=None, metadata={"sa": Column(String)})
     wav_s3_url: str = field(default=None, metadata={"sa": Column(String)})
     wav_s3_metadata: Dict = field(default=None, metadata={"sa": Column(JSON)})
+    mp3_etag_hash: str = field(default=None, metadata={"sa": Column(String)})
     mp3_s3_url: str = field(default=None, metadata={"sa": Column(String)})
     mp3_s3_metadata: Dict = field(default=None, metadata={"sa": Column(JSON)})

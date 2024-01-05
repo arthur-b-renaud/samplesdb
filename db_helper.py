@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker, joinedload
 
 from config.alembic_config import DB_URI
-from db_models import Artist, Track, ArtistTrack, Album
+from db_models import ArtistModel, TrackModel, ArtistTrackModel, AlbumModel
 
 engine = create_engine(
     DB_URI,
@@ -16,7 +16,7 @@ engine = create_engine(
 create_session = sessionmaker(bind=engine, autocommit=False)
 
 
-def create_artist(session: Session, artist: Artist) -> Artist:
+def create_artist(session: Session, artist: ArtistModel) -> ArtistModel:
     session.add(artist)
     session.commit()
     return artist
@@ -26,12 +26,12 @@ def get_artist(
         session: Session,
         full_name: str = None,
         artist_id: int = None,
-) -> Artist:
-    query = session.query(Artist)
+) -> ArtistModel:
+    query = session.query(ArtistModel)
     if full_name is not None:
-        query = query.where(Artist.full_name == full_name)
+        query = query.where(ArtistModel.full_name == full_name)
     if artist_id is not None:
-        query = query.where(Artist.id == artist_id)
+        query = query.where(ArtistModel.id == artist_id)
 
     artists = query.all()
     if len(artists) > 1:
@@ -41,7 +41,7 @@ def get_artist(
     return artists[0]
 
 
-def create_album(session: Session, album: Album) -> Album:
+def create_album(session: Session, album: AlbumModel) -> AlbumModel:
     session.add(album)
     session.commit()
     return album
@@ -51,12 +51,12 @@ def get_album(
         session: Session,
         title: str = None,
         album_id: int = None,
-) -> Album:
-    query = session.query(Album)
+) -> AlbumModel:
+    query = session.query(AlbumModel)
     if title is not None:
-        query = query.where(Album.title == title)
+        query = query.where(AlbumModel.title == title)
     if album_id is not None:
-        query = query.where(Album.id == album_id)
+        query = query.where(AlbumModel.id == album_id)
 
     albums = query.all()
     if len(albums) > 1:
@@ -68,32 +68,32 @@ def get_album(
 
 def create_samples(
     session: Session,
-    tracks_and_artists: List[Tuple[Track, List[Artist]]],
-) -> List[Track]:
+    tracks_and_artists: List[Tuple[TrackModel, List[ArtistModel]]],
+) -> List[TrackModel]:
     """
     Create multiple Samples
     :param session: the connexion to the database
-    :param tracks_and_artists: List of tuples with Tracks and Artists of each track. Example:
+    :param tracks_and_artists: List of tuples with TrackModels and ArtistModels of each track. Example:
     >>> tracks_and_artists = [
     >>>     (
-    >>>         Track(title="Dark serviettes", album=my_album),     # Track #1
-    >>>         [my_arist_1, my_arist_2],                           # Artists for the Track #1
+    >>>         TrackModel(title="Dark serviettes", album=my_album),     # TrackModel #1
+    >>>         [my_arist_1, my_arist_2],                           # ArtistModels for the TrackModel #1
     >>>     ),
     >>>     (
-    >>>         Track(title="Deep chenille", album=my_album),       # Track #2
-    >>>         [my_arist_1, my_arist_2],                           # Artists for the Track #2
+    >>>         TrackModel(title="Deep chenille", album=my_album),       # TrackModel #2
+    >>>         [my_arist_1, my_arist_2],                           # ArtistModels for the TrackModel #2
     >>>     ),
     >>> ]
 
     :return:
     """
     completed_tracks = []
-    # For each Track and each Artist, create a relation many-to-many ArtistTrack
+    # For each TrackModel and each ArtistModel, create a relation many-to-many ArtistTrackModel
     for track, artists in tracks_and_artists:
         completed_track = track
         completed_track.artists_tracks = []
         for artist in artists:
-            completed_track.artists_tracks.append(ArtistTrack(
+            completed_track.artists_tracks.append(ArtistTrackModel(
                 artist=artist,
                 track=track,
             ))
@@ -109,16 +109,16 @@ def get_track(
         session: Session,
         title: str = None,
         track_id: int = None,
-) -> Track:
-    query = session.query(Track)
+) -> TrackModel:
+    query = session.query(TrackModel)
     if title is not None:
-        query = query.where(Track.title == title)
+        query = query.where(TrackModel.title == title)
     if track_id is not None:
-        query = query.where(Track.id == track_id)
+        query = query.where(TrackModel.id == track_id)
 
     tracks = (
         query
-        .options(joinedload(Track.artists_tracks))
+        .options(joinedload(TrackModel.artists_tracks))
         .all()
     )
     if len(tracks) > 1:
@@ -131,8 +131,8 @@ def get_track(
 if __name__ == "__main__":
     # Create artist
     # with create_session() as conn:
-    #     new_artist_1 = create_artist(artist=Artist(full_name="Patrick Sebastien"), session=conn)
-    #     new_artist_2 = create_artist(artist=Artist(full_name="Boris Breja"), session=conn)
+    #     new_artist_1 = create_artist(artist=ArtistModel(full_name="Patrick Sebastien"), session=conn)
+    #     new_artist_2 = create_artist(artist=ArtistModel(full_name="Boris Breja"), session=conn)
 
     # Get artist
     # with create_session() as conn:
@@ -141,11 +141,11 @@ if __name__ == "__main__":
 
     # Create album
     # with create_session() as conn:
-    #     new_album = create_album(album=Album(title="My Album"), session=conn)
+    #     new_album = create_album(album=AlbumModel(title="My AlbumModel"), session=conn)
 
     # Get album
     # with create_session() as conn:
-    #     created_album = get_album(title="My Album", session=conn)
+    #     created_album = get_album(title="My AlbumModel", session=conn)
     #     print(created_album)
 
     # Create tracks
@@ -153,15 +153,15 @@ if __name__ == "__main__":
     #     my_arist_1 = get_artist(full_name="Boris Breja", session=conn)
     #     my_arist_2 = get_artist(full_name="Patrick Sebastien", session=conn)
     #
-    #     my_album = get_album(title="My Album", session=conn)
+    #     my_album = get_album(title="My AlbumModel", session=conn)
     #
     #     my_samples = [
     #         (
-    #             Track(title="Dark serviettes", album=my_album),
+    #             TrackModel(title="Dark serviettes", album=my_album),
     #             [my_arist_1, my_arist_2],
     #         ),
     #         (
-    #             Track(title="Deep chenille", album=my_album),
+    #             TrackModel(title="Deep chenille", album=my_album),
     #             [my_arist_1, my_arist_2],
     #         ),
     #     ]
@@ -176,7 +176,7 @@ if __name__ == "__main__":
     # Get track
     with create_session() as conn:
         my_track = get_track(title="Dark serviettes", session=conn)
-        print("Track:", my_track)
-        print("Artists:", [artist_track.artist for artist_track in my_track.artists_tracks])
-        print("Album:", my_track.album)
+        print("TrackModel:", my_track)
+        print("ArtistModels:", [artist_track.artist for artist_track in my_track.artists_tracks])
+        print("AlbumModel:", my_track.album)
 
