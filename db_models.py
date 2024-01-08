@@ -71,6 +71,7 @@ class ArtistModel(IdBaseMixin, TimestampBaseMixin):
         default_factory=list,
         metadata={"sa": relationship("ArtistTrackModel", lazy="noload")},
     )
+    __table_args__ = ((UniqueConstraint('full_name', name='uq_full_name')),)
 
 
 @mapper_registry.mapped
