@@ -1,39 +1,68 @@
-from pathlib import Path
+import hashlib
+import os
 from typing import List
 
+import boto3
+import magic
+from botocore.exceptions import ClientError, NoCredentialsError
+
 from db_helper import create_session, get_album, get_artist
-from db_models import TrackModel, ArtistModel, AlbumModel
+from db_models import TrackModel, ArtistModel
+from s3helper import S3Helper
+from config import config
+
+# Added for S3 support
+s3_helper = S3Helper()
 
 
 class TrackController:
-    def __init__(self, track_model: TrackModel=None):
+    def __init__(self, track_model: TrackModel = None):
         self.track_model = track_model
         self.conn = create_session()
 
-    def download(self):
-        pass
+    @staticmethod
+    def define_s3key(filepath):
+        # Compute MD5 hash
+        md5_hash = hashlib.md5()
+        with open(filepath, 'rb') as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                md5_hash.update(chunk)
+        md5_hex = md5_hash.hexdigest()
 
-    def upload(self, filepath, artists: List[ArtistModel], track_model: TrackModel):
+        # Concatenate MD5 hash and file title
+        return f"tracks/{md5_hex}---{os.path.basename(filepath)}"
+
+    def download(self, s3_file_key, local_file_path):
+        try:
+            s3 = boto3.client('s3')
+            s3.download_file(config.S3_BUCKET, s3_file_key, local_file_path)
+        except NoCredentialsError:
+            raise ValueError("Credentials not available")
+        except ClientError as e:
+            raise Exception(f"An error occurred: {e}")
+        finally:
+            del s3
+
+    def upload(
+            self,
+            filepath,
+            artists: List[ArtistModel],
+            track_model: TrackModel,
+            s3_helper=None
+    ):
         # 1. Upload filepath to s3
-        # ...
+        extra_args = {"ACL": "public-read",
+                      "ContentType": f"Content-Type: {magic.from_file(filepath, mime=True)}"}
+        s3_obj = s3_helper.upload_file(self.define_s3key(filepath), filepath, extra_args=extra_args)
 
         # 2. Add url to model
-        track_model.mp3_s3_url = "htts://...."
-
-
+        track_model.mp3_s3_url = s3_obj.url
+        track_model.title = os.path.basename(filepath)
         self.track_model = track_model
-
-    def get_album(self, **kwargs):
-        return get_album(session=self.conn, **kwargs)
-
-    def get_artist(self, **kwargs):
-        return get_artist(session=self.conn, **kwargs)
-
-    def upload(self, filepath, artists_names: List[str], album_name: str, track_model: TrackModel):
-        pass
 
     def __del__(self):
         self.conn.close()
+
 
 if __name__ == '__main__':
     tc = TrackController()
@@ -49,16 +78,12 @@ if __name__ == '__main__':
             track_model=TrackModel(title="track.mp3", album=my_album)
         )
 
-
-
     with create_session() as conn:
         query = conn.query(TrackModel)
         track = query.where(TrackModel.id == 1)
         print(track)
 
-
-1/0
-
+1 / 0
 
 #
 # class Library:
