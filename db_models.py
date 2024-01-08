@@ -166,6 +166,7 @@ class TrackModel(IdBaseMixin, TimestampBaseMixin):
     # File storage
     s3_url: str = field(default=None, metadata={"sa": Column(String)})
     s3_etag_hash: str = field(default=None, metadata={"sa": Column(String)})
+    s3_metadata: Dict = field(default=None, metadata={"sa": Column(JSON)})
     wav_etag_hash: str = field(default=None, metadata={"sa": Column(String)})
     wav_s3_url: str = field(default=None, metadata={"sa": Column(String)})
     wav_s3_metadata: Dict = field(default=None, metadata={"sa": Column(JSON)})
