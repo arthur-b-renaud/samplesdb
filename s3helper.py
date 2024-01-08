@@ -1,7 +1,6 @@
 import glob
 import itertools
 import json
-import logging
 import os
 from io import BytesIO
 from pathlib import Path
@@ -11,12 +10,9 @@ import aioboto3
 import boto3 as boto3
 from tqdm import tqdm
 
+from config import config
+from libs.AsyncTask import AsyncTask
 
-if __name__ == "__main__":
-    from dotenv import load_dotenv
-    load_dotenv()
-
-AWS_ACCESS_KEY_ID = os.environ
 
 class S3Helper:
     def __init__(self):
@@ -24,25 +20,25 @@ class S3Helper:
             "s3",
             aws_access_key_id=config.AWS_ACCESS_KEY_ID,
             aws_secret_access_key=config.AWS_SECRET_ACCESS_KEY,
-            region_name=config.AWS_REGION_STACKADOC,
+            region_name=config.AWS_REGION,
         )
         self.s3_client = boto3.client(
             "s3",
             aws_access_key_id=config.AWS_ACCESS_KEY_ID,
             aws_secret_access_key=config.AWS_SECRET_ACCESS_KEY,
-            region_name=config.AWS_REGION_STACKADOC,
+            region_name=config.AWS_REGION,
         )
         self.aioboto3_session = aioboto3.Session(
             aws_access_key_id=config.AWS_ACCESS_KEY_ID,
             aws_secret_access_key=config.AWS_SECRET_ACCESS_KEY,
-            region_name=config.AWS_REGION_STACKADOC,
+            region_name=config.AWS_REGION,
         )
-        self.stackabot_bucket = self.s3_resource.Bucket(config.STACKABOT_BUCKET)
+        self.stackabot_bucket = self.s3_resource.Bucket(config.S3_BUCKET)
 
     @staticmethod
     def get_aws_public_url(object_key):
         return (
-            f"https://{config.STACKABOT_BUCKET}.s3.{config.AWS_REGION_STACKADOC}"
+            f"https://{config.S3_BUCKET}.s3.{config.AWS_REGION}"
             + f".amazonaws.com/{object_key}"
         )
 
@@ -72,15 +68,15 @@ class S3Helper:
         with tqdm(total=file_size, unit="B", unit_scale=True, desc=object_key) as pbar:
             self.s3_client.upload_fileobj(
                 file_content,
-                config.STACKABOT_BUCKET,
+                config.S3_BUCKET,
                 object_key,
                 Callback=lambda bytes_transferred: pbar.update(bytes_transferred),
                 ExtraArgs=extra_args,
             )
         return {
             "url": self.get_aws_public_url(object_key),
-            "bucket": config.STACKABOT_BUCKET,
-            "region": config.AWS_REGION_STACKADOC,
+            "bucket": config.S3_BUCKET,
+            "region": config.AWS_REGION,
             "key": object_key,
         }
 
@@ -103,7 +99,7 @@ class S3Helper:
         checksum_local_file = os.path.join(local_folder_path, config.S3_FOLDER_CHECKSUMS_FILENAME)
         if not os.path.isfile(checksum_local_file):
             return False
-        bucket = self.s3_resource.Bucket(config.STACKABOT_BUCKET)
+        bucket = self.s3_resource.Bucket(config.S3_BUCKET)
         with open(checksum_local_file) as checksum_file:
             checksum_local = {line.strip() for line in checksum_file}
         checksum_s3 = {
@@ -120,7 +116,7 @@ class S3Helper:
         download_checksum: bool = False,
         enable_tqdm: bool = False,
     ) -> None:
-        bucket = self.s3_resource.Bucket(config.STACKABOT_BUCKET)
+        bucket = self.s3_resource.Bucket(config.S3_BUCKET)
         checksums = []
         for obj in bucket.objects.filter(Prefix=s3_folder_name):
             filename = obj.key[len(s3_folder_name) :]
@@ -137,11 +133,11 @@ class S3Helper:
 
             if enable_tqdm:
                 file_length = self.s3_client.head_object(
-                    Bucket=config.STACKABOT_BUCKET, Key=obj.key
+                    Bucket=config.S3_BUCKET, Key=obj.key
                 )["ContentLength"]
                 with tqdm(file_length, unit="B", unit_scale=True, desc=destination_path) as pbar:
                     self.s3_client.download_file(
-                        Bucket=config.STACKABOT_BUCKET,
+                        Bucket=config.S3_BUCKET,
                         Key=obj.key,
                         Filename=destination_path,
                         Callback=lambda bytes_transferred: pbar.update(bytes_transferred),
@@ -217,7 +213,7 @@ class S3Helper:
                     if not object_exists:
                         await s3.upload_fileobj(
                             open(data["file_path"], "rb"),
-                            config.STACKABOT_BUCKET,
+                            config.S3_BUCKET,
                             data["s3_key"],
                             ExtraArgs=data.get("extra_args"),
                         )
@@ -272,13 +268,12 @@ class S3Helper:
                 async with aioboto3_session.client("s3") as s3:
                     try:
                         await s3.download_file(
-                            config.STACKABOT_BUCKET,
+                            config.S3_BUCKET,
                             data["s3_key"],
                             data["file_path"],
                         )
-                    except:  # noqa
-                        logger.error('Error on Key : "{}"'.format(data["s3_key"]))
-                        raise
+                    except: # noqa
+                        raise ValueError('Error on Key : "{}"'.format(data["s3_key"]))
 
         # Deduplicate dicts
         key = lambda x: json.dumps(  # noqa E731 do not assign a lambda expression
@@ -318,12 +313,11 @@ class S3Helper:
                 async with aioboto3_session.client("s3") as s3:
                     try:
                         return await s3.head_object(
-                            Bucket=config.STACKABOT_BUCKET,
+                            Bucket=config.S3_BUCKET,
                             Key=s3_key,
                         )
                     except:  # noqa
-                        logger.error("Error occurred on key {} :".format(s3_key))
-                        raise
+                        raise ValueError("Error occurred on key {} :".format(s3_key))
 
         return MyAsyncTask().apply(
             data_list=s3_keys,
@@ -338,3 +332,6 @@ class S3Helper:
 
 if __name__ == "__main__":
     s3_helper = S3Helper()
+
+    extra_args = {"ACL": "public-read", "ContentType": "Content-Type: audio/mpeg"}
+    a = s3_helper.upload_file("tracks/test.mp3", '/home/arthur/data/music/full_track_ddim50.mp3', extra_args=extra_args)
